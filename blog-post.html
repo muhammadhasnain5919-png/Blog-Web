@@ -1,0 +1,1451 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blog | Structuring Scalable Game Economies with Redis</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-color: #030303;
+        --text-main: #ffffff;
+        --text-muted: #8b949e;
+        --glass-bg: rgba(255, 255, 255, 0.02);
+        --glass-border: rgba(255, 255, 255, 0.06);
+        --glass-hover: rgba(255, 255, 255, 0.05);
+        --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        --accent: #3b82f6;
+        --accent-glow: rgba(59, 130, 246, 0.4);
+        --accent-hover: #2563eb;
+        --blob-1: rgba(59, 130, 246, 0.15);
+        --blob-2: rgba(147, 51, 234, 0.15);
+      }
+      [data-theme="light"] {
+        --bg-color: #f0f2f5;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --glass-bg: rgba(255, 255, 255, 0.6);
+        --glass-border: rgba(0, 0, 0, 0.05);
+        --glass-hover: rgba(255, 255, 255, 0.9);
+        --glass-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+        --accent: #0f172a;
+        --accent-glow: rgba(15, 23, 42, 0.2);
+        --accent-hover: #1e293b;
+        --blob-1: rgba(59, 130, 246, 0.2);
+        --blob-2: rgba(147, 51, 234, 0.2);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        overflow-x: hidden;
+        transition:
+          background-color 0.5s ease,
+          color 0.5s ease;
+        min-height: 100vh;
+      }
+
+      /* ── Ambient blobs ── */
+      .ambient-light {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(100px);
+        z-index: -1;
+        pointer-events: none;
+        animation: float 20s infinite alternate ease-in-out;
+      }
+      .ambient-1 {
+        top: -10%;
+        left: -10%;
+        width: 50vw;
+        height: 50vw;
+        background: var(--blob-1);
+      }
+      .ambient-2 {
+        bottom: -20%;
+        right: -10%;
+        width: 60vw;
+        height: 60vw;
+        background: var(--blob-2);
+        animation-delay: -10s;
+      }
+      @keyframes float {
+        0% {
+          transform: translate(0, 0) scale(1);
+        }
+        100% {
+          transform: translate(5%, 5%) scale(1.1);
+        }
+      }
+
+      /* ── Loader ── */
+      #loader {
+        position: fixed;
+        inset: 0;
+        background: var(--bg-color);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition:
+          opacity 0.6s ease,
+          visibility 0.6s;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--glass-border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s cubic-bezier(0.6, 0.2, 0.4, 0.8) infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      body.loaded #loader {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      /* ── Typography ── */
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-weight: 700;
+        letter-spacing: -0.03em;
+      }
+      .text-gradient {
+        background: linear-gradient(
+          135deg,
+          var(--text-main),
+          var(--text-muted)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      /* ── Animations ── */
+      .animate-up {
+        opacity: 0;
+        transform: translateY(30px);
+        animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      @keyframes slideUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .d-1 {
+        animation-delay: 0.1s;
+      }
+      .d-2 {
+        animation-delay: 0.2s;
+      }
+      .d-3 {
+        animation-delay: 0.3s;
+      }
+      .d-4 {
+        animation-delay: 0.4s;
+      }
+
+      /* ── Glass panel ── */
+      .glass-panel {
+        background: var(--glass-bg);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--glass-border);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.05),
+          var(--glass-shadow);
+        border-radius: 24px;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      /* ── Navbar ── */
+      .navbar {
+        padding: 1.5rem 0;
+        background: transparent;
+      }
+      .navbar-brand {
+        font-weight: 800;
+        font-size: 1.75rem;
+        color: var(--text-main) !important;
+        letter-spacing: -1px;
+      }
+      .nav-link {
+        color: var(--text-muted) !important;
+        font-weight: 500;
+        font-size: 0.95rem;
+        margin: 0 0.5rem;
+        transition: color 0.3s;
+      }
+      .nav-link:hover {
+        color: var(--text-main) !important;
+      }
+
+      /* ── Buttons ── */
+      .btn-glass {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        color: var(--text-main);
+        border-radius: 12px;
+        padding: 0.6rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+      }
+      .btn-glass:hover {
+        background: var(--glass-hover);
+        border-color: var(--accent);
+        transform: translateY(-2px);
+        color: var(--text-main);
+      }
+      .btn-primary-custom {
+        background: var(--accent);
+        color: #fff !important;
+        border: none;
+      }
+      .btn-primary-custom:hover {
+        background: var(--accent-hover);
+        box-shadow: 0 0 20px var(--accent-glow);
+        color: #fff !important;
+      }
+      .btn-icon {
+        width: 42px;
+        height: 42px;
+        padding: 0;
+        border-radius: 50%;
+      }
+
+      /* ── Progress bar ── */
+      #reading-progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        width: 0%;
+        background: linear-gradient(90deg, var(--accent), #8b5cf6);
+        z-index: 10000;
+        transition: width 0.1s linear;
+        box-shadow: 0 0 12px var(--accent-glow);
+      }
+
+      /* ── Hero ── */
+      .post-hero {
+        padding: 3rem 0 2rem;
+      }
+      .post-hero-img-wrapper {
+        width: 100%;
+        height: 480px;
+        border-radius: 24px;
+        overflow: hidden;
+        margin-bottom: 3rem;
+        position: relative;
+      }
+      .post-hero-img-wrapper::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to top,
+          rgba(3, 3, 3, 0.6) 0%,
+          transparent 50%
+        );
+        border-radius: 24px;
+      }
+      [data-theme="light"] .post-hero-img-wrapper::after {
+        background: linear-gradient(
+          to top,
+          rgba(240, 242, 245, 0.4) 0%,
+          transparent 50%
+        );
+      }
+      .post-hero-img-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.8s ease;
+      }
+      .post-hero-img-wrapper:hover img {
+        transform: scale(1.02);
+      }
+
+      /* ── Tag dot ── */
+      .tag-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .tag-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        border-radius: 50%;
+        box-shadow: 0 0 10px var(--accent);
+      }
+      .tag-text {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+      }
+
+      /* ── Post title ── */
+      .post-title {
+        font-size: clamp(2rem, 4vw, 3rem);
+        line-height: 1.15;
+        margin-bottom: 1.5rem;
+      }
+
+      /* ── Meta bar ── */
+      .post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 1.2rem 1.5rem;
+        margin-bottom: 2.5rem;
+      }
+      .meta-author {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .author-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--glass-border);
+      }
+      .author-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+      .meta-divider {
+        width: 1px;
+        height: 20px;
+        background: var(--glass-border);
+      }
+      .meta-item {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+
+      /* ── Article body ── */
+      .article-body {
+        line-height: 1.85;
+        font-size: 1.05rem;
+        color: var(--text-muted);
+      }
+      .article-body p {
+        margin-bottom: 1.5rem;
+      }
+      .article-body h2 {
+        font-size: 1.6rem;
+        color: var(--text-main);
+        margin: 2.5rem 0 1rem;
+      }
+      .article-body h3 {
+        font-size: 1.25rem;
+        color: var(--text-main);
+        margin: 2rem 0 0.8rem;
+      }
+      .article-body strong {
+        color: var(--text-main);
+        font-weight: 600;
+      }
+
+      /* Code block */
+      .code-block {
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        overflow-x: auto;
+        position: relative;
+      }
+      [data-theme="light"] .code-block {
+        background: rgba(15, 23, 42, 0.06);
+      }
+      .code-block pre {
+        margin: 0;
+        font-family: "Fira Code", "Courier New", monospace;
+        font-size: 0.88rem;
+        color: #e2e8f0;
+        line-height: 1.7;
+      }
+      [data-theme="light"] .code-block pre {
+        color: #1e293b;
+      }
+      .code-lang {
+        position: absolute;
+        top: 0.75rem;
+        right: 1rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--accent);
+      }
+
+      /* Callout / blockquote */
+      .callout {
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.5rem;
+        border-radius: 0 16px 16px 0;
+        margin: 1.5rem 0;
+        background: rgba(59, 130, 246, 0.06);
+      }
+      .callout p {
+        margin: 0;
+        color: var(--text-main);
+        font-style: italic;
+      }
+
+      /* ── Sidebar ── */
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        position: sticky;
+        top: 2rem;
+      }
+      .widget {
+        padding: 2rem;
+      }
+      .widget-title {
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      /* TOC */
+      .toc-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .toc-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--glass-border);
+      }
+      .toc-item:last-child {
+        border-bottom: none;
+      }
+      .toc-link {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: color 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .toc-link:hover {
+        color: var(--accent);
+      }
+      .toc-link::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--glass-border);
+        flex-shrink: 0;
+        transition: background 0.2s;
+      }
+      .toc-link:hover::before {
+        background: var(--accent);
+      }
+
+      /* Tags cloud */
+      .tag-chip {
+        display: inline-flex;
+        align-items: center;
+        background: transparent;
+        border: 1px solid var(--glass-border);
+        color: var(--text-muted);
+        padding: 0.4rem 1rem;
+        border-radius: 40px;
+        font-size: 0.82rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s;
+        margin: 0.25rem;
+      }
+      .tag-chip:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      /* Share buttons */
+      .share-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1.2rem;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        color: var(--text-main);
+      }
+      .share-btn:hover {
+        transform: translateY(-2px);
+        color: var(--text-main);
+      }
+      .share-x {
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .share-link {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+      }
+
+      /* ── Related posts ── */
+      .related-card {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        padding: 0.75rem;
+        border-radius: 16px;
+        text-decoration: none;
+        color: inherit;
+        transition: background 0.3s;
+        margin-left: -0.75rem;
+        margin-right: -0.75rem;
+      }
+      .related-card:hover {
+        background: var(--glass-hover);
+        color: inherit;
+      }
+      .related-img {
+        width: 72px;
+        height: 72px;
+        border-radius: 12px;
+        object-fit: cover;
+        flex-shrink: 0;
+      }
+      .related-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        line-height: 1.3;
+        margin-bottom: 0.25rem;
+        color: var(--text-main);
+      }
+      .related-meta {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+      }
+
+      /* ── Author card ── */
+      .author-card {
+        text-align: center;
+        padding: 2rem;
+      }
+      .author-card-avatar {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--glass-border);
+        margin-bottom: 1rem;
+      }
+      .author-card-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+      }
+      .author-card-bio {
+        font-size: 0.88rem;
+        color: var(--text-muted);
+        line-height: 1.6;
+        margin-bottom: 1.2rem;
+      }
+
+      /* ── Bottom nav ── */
+      .post-nav {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin: 3rem 0;
+      }
+      .post-nav-card {
+        padding: 1.5rem;
+        border-radius: 16px;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .post-nav-card:hover {
+        background: var(--glass-hover);
+        color: inherit;
+        border-color: var(--accent);
+      }
+      .post-nav-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+      }
+      .post-nav-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        line-height: 1.4;
+      }
+      .post-nav-card.next {
+        text-align: right;
+      }
+
+      /* ── Comments ── */
+      .comment-box {
+        background: var(--bg-color);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 1rem 1.2rem;
+        width: 100%;
+        color: var(--text-main);
+        font-family: inherit;
+        font-size: 0.95rem;
+        outline: none;
+        resize: vertical;
+        min-height: 100px;
+        transition:
+          border-color 0.3s,
+          box-shadow 0.3s;
+      }
+      .comment-box:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 4px var(--accent-glow);
+      }
+      .comment-input {
+        width: 100%;
+        background: var(--bg-color);
+        border: 1px solid var(--glass-border);
+        padding: 0.8rem 1rem;
+        border-radius: 12px;
+        color: var(--text-main);
+        outline: none;
+        transition:
+          border-color 0.3s,
+          box-shadow 0.3s;
+        font-size: 0.95rem;
+        font-family: inherit;
+      }
+      .comment-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 4px var(--accent-glow);
+      }
+
+      /* ── Responsive ── */
+      @media (max-width: 991px) {
+        .post-hero-img-wrapper {
+          height: 300px;
+        }
+        .sidebar {
+          position: static;
+        }
+        .post-nav {
+          grid-template-columns: 1fr;
+        }
+        .post-nav-card.next {
+          text-align: left;
+        }
+      }
+      @media (max-width: 576px) {
+        .post-hero-img-wrapper {
+          height: 220px;
+        }
+        .post-title {
+          font-size: 1.75rem;
+        }
+        .post-meta {
+          gap: 0.75rem;
+        }
+        .meta-divider {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loader"><div class="spinner"></div></div>
+    <div id="reading-progress"></div>
+
+    <div class="ambient-light ambient-1"></div>
+    <div class="ambient-light ambient-2"></div>
+
+    <!-- ── Navbar ── -->
+    <nav class="navbar navbar-expand-lg animate-up d-1">
+      <div class="container">
+        <a class="navbar-brand" href="index.html">Blog</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          style="border-color: var(--glass-border)"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            fill="var(--text-main)"
+            viewBox="0 0 16 16"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"
+            />
+          </svg>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto ms-lg-4">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="about.html">About</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="contact.html">Contact</a>
+            </li>
+          </ul>
+          <div class="d-flex gap-3 align-items-center mt-3 mt-lg-0">
+            <button
+              id="theme-toggle"
+              class="btn-glass btn-icon"
+              aria-label="Toggle theme"
+            >
+              <svg
+                id="icon-sun"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+              <svg
+                id="icon-moon"
+                style="display: none"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+                ></path>
+              </svg>
+            </button>
+            <a href="login.html"><button class="btn-glass">Log in</button></a>
+            <a href="register.html"
+              ><button class="btn-glass btn-primary-custom">Register</button></a
+            >
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ── Hero ── -->
+    <header class="post-hero container animate-up d-2">
+      <div class="tag-wrap mb-3">
+        <div class="tag-dot"></div>
+        <span class="tag-text">System Design</span>
+      </div>
+      <h1 class="post-title">
+        Structuring Scalable Game Economies<br class="d-none d-md-block" />
+        with <span class="text-gradient">Redis</span>
+      </h1>
+      <div class="glass-panel post-meta">
+        <div class="meta-author">
+          <img
+            src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=80&q=80"
+            alt="Author"
+            class="author-avatar"
+          />
+          <div>
+            <div class="author-name">Alex Chen</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted)">
+              Senior Engineer
+            </div>
+          </div>
+        </div>
+        <div class="meta-divider d-none d-sm-block"></div>
+        <div class="meta-item">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          April 20, 2026
+        </div>
+        <div class="meta-divider d-none d-sm-block"></div>
+        <div class="meta-item">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          8 min read
+        </div>
+        <div class="meta-divider d-none d-sm-block"></div>
+        <div class="meta-item">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          3.2k views
+        </div>
+        <div class="ms-auto d-flex gap-2 flex-wrap">
+          <a href="#" class="share-btn share-x">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path
+                d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+              />
+            </svg>
+            Share
+          </a>
+          <button class="share-btn share-link" id="copy-link-btn">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
+              ></path>
+              <path
+                d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+              ></path>
+            </svg>
+            Copy Link
+          </button>
+        </div>
+      </div>
+
+      <div class="post-hero-img-wrapper">
+        <img
+          src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1400&q=80"
+          alt="Post Cover"
+        />
+      </div>
+    </header>
+
+    <!-- ── Main content ── -->
+    <main class="container mb-5 pb-5 animate-up d-3">
+      <div class="row g-5">
+        <!-- Article -->
+        <div class="col-lg-8">
+          <article class="article-body" id="article-content">
+            <p>
+              Managing virtual economies in live-service games is one of the
+              most underestimated engineering challenges in the industry. When
+              millions of players transact simultaneously — trading, spending,
+              earning, and crafting — your backend needs to handle extreme
+              concurrency without ever letting two conflicting writes corrupt
+              shared state.
+            </p>
+
+            <p>
+              In this article, we'll walk through a battle-tested architecture
+              using <strong>Redis</strong> as the primary data layer for in-game
+              economy operations, covering everything from atomic ledger entries
+              to distributed lock strategies.
+            </p>
+
+            <h2 id="why-redis">Why Redis for Game Economies?</h2>
+            <p>
+              Traditional SQL databases struggle under the write amplification
+              of high-frequency micro-transactions. A single player action —
+              opening a loot box, for instance — may trigger a dozen state
+              mutations across item inventories, currency ledgers, quest
+              progress, and achievement counters. Under load, this creates
+              contention hotspots that no index can fully resolve.
+            </p>
+
+            <p>
+              Redis' single-threaded execution model is its superpower here.
+              Every operation is inherently atomic. Its data structures — sorted
+              sets, hashes, streams — map naturally onto economic primitives
+              like leaderboards, wallets, and event logs.
+            </p>
+
+            <div class="callout">
+              <p>
+                "The real challenge isn't throughput — it's designing your data
+                model so Redis never has to do more than one round-trip per
+                transaction."
+              </p>
+            </div>
+
+            <h2 id="ledger-design">Designing the Currency Ledger</h2>
+            <p>
+              The naive approach is to store a player's balance as a single
+              integer field. This works fine for low-concurrency scenarios but
+              collapses under a fan-out write pattern — say, server-side events
+              that reward many players simultaneously. Instead, model the ledger
+              as an <strong>append-only stream of delta entries</strong>.
+            </p>
+
+            <div class="code-block">
+              <span class="code-lang">lua</span>
+              <pre>
+-- Atomic credit using a Lua script
+local player_key = KEYS[1]
+local amount     = tonumber(ARGV[1])
+local tx_id      = ARGV[2]
+
+-- Idempotency: skip if transaction already processed
+if redis.call("SISMEMBER", player_key .. ":processed_txns", tx_id) == 1 then
+  return redis.call("HGET", player_key, "balance")
+end
+
+local current = tonumber(redis.call("HGET", player_key, "balance") or 0)
+local new_bal  = current + amount
+
+redis.call("HSET", player_key, "balance", new_bal)
+redis.call("SADD", player_key .. ":processed_txns", tx_id)
+redis.call("XADD", "ledger:global", "*", "player", player_key, "delta", amount, "tx", tx_id)
+
+return new_bal</pre
+              >
+            </div>
+
+            <p>
+              The Lua script executes atomically. The idempotency check via a
+              processed-transactions set ensures that network retries never
+              double-credit a player — a critical safety property for any
+              real-money or premium currency flow.
+            </p>
+
+            <h2 id="distributed-locks">
+              Distributed Locks for Inventory Slots
+            </h2>
+            <p>
+              Unlike currency (which sums naturally), inventory operations are
+              non-commutative. Equipping an item, consuming a consumable, or
+              claiming a limited-edition drop all require exclusive access to a
+              specific inventory slot during the operation window.
+            </p>
+
+            <p>
+              Use the Redlock algorithm with a short TTL — typically 300ms — to
+              acquire a per-slot lock before any mutation:
+            </p>
+
+            <div class="code-block">
+              <span class="code-lang">typescript</span>
+              <pre>
+async function equipItem(playerId: string, itemId: string): Promise&lt;boolean&gt; {
+  const lockKey = `lock:inventory:${playerId}`;
+  const lockToken = crypto.randomUUID();
+  const ttl = 300; // ms
+
+  const acquired = await redis.set(lockKey, lockToken, {
+    NX: true,       // Only set if not exists
+    PX: ttl,        // Expire after 300ms
+  });
+
+  if (!acquired) throw new Error("INVENTORY_LOCKED");
+
+  try {
+    await performEquip(playerId, itemId);
+    return true;
+  } finally {
+    // Release only if we still own the lock
+    await releaseLock(lockKey, lockToken);
+  }
+}</pre
+              >
+            </div>
+
+            <h3 id="cluster-mode">Scaling Across a Redis Cluster</h3>
+            <p>
+              A single Redis node caps out around 100k ops/sec. For a live game
+              with a million concurrent players, you'll need a cluster. The
+              trick is to ensure all keys for a given player hash to the same
+              slot using <strong>hash tags</strong>:
+            </p>
+
+            <div class="code-block">
+              <span class="code-lang">bash</span>
+              <pre>
+# All keys for player 12345 land on the same shard
+{player:12345}:balance
+{player:12345}:inventory
+{player:12345}:quests
+{player:12345}:processed_txns</pre
+              >
+            </div>
+
+            <p>
+              This lets you execute multi-key Lua scripts and pipelines without
+              cross-slot errors, while still distributing load evenly across
+              your shard ring as the player population grows.
+            </p>
+
+            <h2 id="persistence">Persistence and Durability</h2>
+            <p>
+              Redis' default persistence settings aren't appropriate for
+              financial data. Configure
+              <strong>AOF (Append-Only File)</strong> with
+              <code
+                style="
+                  color: var(--accent);
+                  background: rgba(59, 130, 246, 0.1);
+                  padding: 2px 6px;
+                  border-radius: 4px;
+                "
+                >appendfsync everysec</code
+              >
+              as a baseline, and promote critical economy events to a durable
+              stream that gets replicated to PostgreSQL asynchronously via a
+              dedicated consumer group.
+            </p>
+
+            <p>
+              This hybrid architecture — Redis for hot-path speed, Postgres for
+              cold-path durability — gives you the best of both worlds:
+              sub-millisecond transaction latency with full ACID guarantees for
+              audit and reconciliation.
+            </p>
+
+            <h2 id="conclusion">Conclusion</h2>
+            <p>
+              Building a reliable game economy isn't just an engineering problem
+              — it's a trust contract with your players. Every missed credit,
+              every duplicated charge, erodes that trust permanently. By leaning
+              into Redis' atomic primitives, designing for idempotency from day
+              one, and layering a durable event log beneath the hot path, you
+              can handle millions of concurrent transactions without breaking a
+              sweat.
+            </p>
+
+            <p>
+              The full reference implementation, including the Redlock client
+              and consumer group worker, is available on GitHub. Ship fast, stay
+              consistent.
+            </p>
+          </article>
+
+          <!-- Tags -->
+          <div class="mt-4 mb-4">
+            <a href="#" class="tag-chip">Redis</a>
+            <a href="#" class="tag-chip">System Design</a>
+            <a href="#" class="tag-chip">Game Dev</a>
+            <a href="#" class="tag-chip">Distributed Systems</a>
+            <a href="#" class="tag-chip">Backend</a>
+          </div>
+
+          <!-- Post navigation -->
+          <div class="post-nav">
+            <a href="#" class="glass-panel post-nav-card prev">
+              <span class="post-nav-label">← Previous</span>
+              <span class="post-nav-title"
+                >Fluid Web Interfaces with CSS Variables</span
+              >
+            </a>
+            <a href="#" class="glass-panel post-nav-card next">
+              <span class="post-nav-label">Next →</span>
+              <span class="post-nav-title"
+                >Client Interpolation & Packet Loss Mitigation</span
+              >
+            </a>
+          </div>
+
+          <!-- Comments -->
+          <div class="glass-panel p-4 mt-2">
+            <h4 class="widget-title mb-4" style="font-size: 1.25rem">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                ></path>
+              </svg>
+              Leave a Comment
+            </h4>
+            <div class="row g-3 mb-3">
+              <div class="col-sm-6">
+                <input
+                  type="text"
+                  class="comment-input"
+                  placeholder="Your name"
+                />
+              </div>
+              <div class="col-sm-6">
+                <input
+                  type="email"
+                  class="comment-input"
+                  placeholder="email@domain.com"
+                />
+              </div>
+            </div>
+            <textarea
+              class="comment-box mb-3"
+              placeholder="Share your thoughts…"
+            ></textarea>
+            <button
+              class="btn-glass btn-primary-custom"
+              style="padding: 0.7rem 2rem; border-radius: 12px"
+            >
+              Post Comment
+            </button>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="col-lg-4">
+          <div class="sidebar">
+            <!-- Author -->
+            <div class="glass-panel author-card">
+              <img
+                src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80"
+                alt="Author"
+                class="author-card-avatar"
+              />
+              <div class="author-card-name">Alex Chen</div>
+              <p class="author-card-bio">
+                Senior backend engineer with 8 years in live-service games.
+                Obsessed with distributed systems, Redis internals, and elegant
+                data models.
+              </p>
+              <a
+                href="Profile.html"
+                class="btn-glass"
+                style="width: 100%; justify-content: center"
+                >View Profile</a
+              >
+            </div>
+
+            <!-- Table of Contents -->
+            <div class="glass-panel widget">
+              <h4 class="widget-title">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="8" y1="6" x2="21" y2="6"></line>
+                  <line x1="8" y1="12" x2="21" y2="12"></line>
+                  <line x1="8" y1="18" x2="21" y2="18"></line>
+                  <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                  <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                  <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+                Contents
+              </h4>
+              <ul class="toc-list">
+                <li class="toc-item">
+                  <a href="#why-redis" class="toc-link"
+                    >Why Redis for Game Economies?</a
+                  >
+                </li>
+                <li class="toc-item">
+                  <a href="#ledger-design" class="toc-link"
+                    >Designing the Currency Ledger</a
+                  >
+                </li>
+                <li class="toc-item">
+                  <a href="#distributed-locks" class="toc-link"
+                    >Distributed Locks for Inventory</a
+                  >
+                </li>
+                <li class="toc-item">
+                  <a href="#cluster-mode" class="toc-link"
+                    >Scaling Across a Redis Cluster</a
+                  >
+                </li>
+                <li class="toc-item">
+                  <a href="#persistence" class="toc-link"
+                    >Persistence and Durability</a
+                  >
+                </li>
+                <li class="toc-item">
+                  <a href="#conclusion" class="toc-link">Conclusion</a>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Related Posts -->
+            <div class="glass-panel widget">
+              <h4 class="widget-title">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                Related Posts
+              </h4>
+              <a href="#" class="related-card">
+                <img
+                  src="https://images.unsplash.com/photo-1618761714954-0b8cd0026356?auto=format&fit=crop&w=150&q=80"
+                  class="related-img"
+                  loading="lazy"
+                  alt="Related"
+                />
+                <div>
+                  <div class="related-title">Fluid Web Interfaces</div>
+                  <div class="related-meta">Apr 18, 2026 · 5 min read</div>
+                </div>
+              </a>
+              <a href="#" class="related-card">
+                <img
+                  src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=150&q=80"
+                  class="related-img"
+                  loading="lazy"
+                  alt="Related"
+                />
+                <div>
+                  <div class="related-title">Client Interpolation</div>
+                  <div class="related-meta">Apr 15, 2026 · 6 min read</div>
+                </div>
+              </a>
+              <a href="#" class="related-card">
+                <img
+                  src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=150&q=80"
+                  class="related-img"
+                  loading="lazy"
+                  alt="Related"
+                />
+                <div>
+                  <div class="related-title">Custom Physics Nodes Setup</div>
+                  <div class="related-meta">Apr 12, 2026 · 7 min read</div>
+                </div>
+              </a>
+            </div>
+
+            <!-- Newsletter -->
+            <div class="glass-panel widget">
+              <h4 class="widget-title">Newsletter</h4>
+              <p
+                class="text-muted"
+                style="font-size: 0.95rem; margin-bottom: 1.5rem"
+              >
+                Join 4,000+ developers. Get weekly architectural deep dives
+                right to your inbox.
+              </p>
+              <div style="display: flex; flex-direction: column; gap: 0.8rem">
+                <input
+                  type="email"
+                  placeholder="email@example.com"
+                  style="
+                    width: 100%;
+                    background: var(--bg-color);
+                    border: 1px solid var(--glass-border);
+                    padding: 0.8rem 1rem;
+                    border-radius: 12px;
+                    color: var(--text-main);
+                    outline: none;
+                  "
+                />
+                <button
+                  class="btn-glass btn-primary-custom"
+                  style="width: 100%; padding: 0.8rem; border-radius: 12px"
+                >
+                  Subscribe
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Loader
+      window.addEventListener("load", () => {
+        setTimeout(() => document.body.classList.add("loaded"), 300);
+      });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        // Theme toggle
+        const toggleBtn = document.getElementById("theme-toggle");
+        const iconSun = document.getElementById("icon-sun");
+        const iconMoon = document.getElementById("icon-moon");
+        const htmlTag = document.documentElement;
+
+        const savedTheme = localStorage.getItem("zairo-theme") || "dark";
+        setTheme(savedTheme);
+
+        toggleBtn.addEventListener("click", () => {
+          const newTheme =
+            htmlTag.getAttribute("data-theme") === "dark" ? "light" : "dark";
+          setTheme(newTheme);
+        });
+
+        function setTheme(theme) {
+          htmlTag.setAttribute("data-theme", theme);
+          localStorage.setItem("zairo-theme", theme);
+          iconSun.style.display = theme === "light" ? "none" : "block";
+          iconMoon.style.display = theme === "light" ? "block" : "none";
+        }
+
+        // Reading progress bar
+        const progressBar = document.getElementById("reading-progress");
+        window.addEventListener("scroll", () => {
+          const article = document.getElementById("article-content");
+          if (!article) return;
+          const articleTop = article.offsetTop;
+          const articleHeight = article.offsetHeight;
+          const scrolled = window.scrollY - articleTop;
+          const pct = Math.min(
+            100,
+            Math.max(0, (scrolled / articleHeight) * 100),
+          );
+          progressBar.style.width = pct + "%";
+        });
+
+        // Copy link
+        document
+          .getElementById("copy-link-btn")
+          .addEventListener("click", () => {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+              const btn = document.getElementById("copy-link-btn");
+              const original = btn.innerHTML;
+              btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!`;
+              setTimeout(() => {
+                btn.innerHTML = original;
+              }, 2000);
+            });
+          });
+
+        // Smooth scroll for TOC
+        document.querySelectorAll(".toc-link").forEach((link) => {
+          link.addEventListener("click", (e) => {
+            e.preventDefault();
+            const target = document.querySelector(link.getAttribute("href"));
+            if (target)
+              target.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

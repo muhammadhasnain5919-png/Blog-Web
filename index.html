@@ -1,0 +1,1651 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blog | All Posts</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-color: #030303;
+        --text-main: #ffffff;
+        --text-muted: #8b949e;
+        --glass-bg: rgba(255, 255, 255, 0.02);
+        --glass-border: rgba(255, 255, 255, 0.06);
+        --glass-hover: rgba(255, 255, 255, 0.05);
+        --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        --accent: #3b82f6;
+        --accent-glow: rgba(59, 130, 246, 0.4);
+        --accent-hover: #2563eb;
+        --blob-1: rgba(59, 130, 246, 0.15);
+        --blob-2: rgba(147, 51, 234, 0.15);
+      }
+      [data-theme="light"] {
+        --bg-color: #f0f2f5;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --glass-bg: rgba(255, 255, 255, 0.6);
+        --glass-border: rgba(0, 0, 0, 0.05);
+        --glass-hover: rgba(255, 255, 255, 0.9);
+        --glass-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+        --accent: #0f172a;
+        --accent-glow: rgba(15, 23, 42, 0.2);
+        --accent-hover: #1e293b;
+        --blob-1: rgba(59, 130, 246, 0.2);
+        --blob-2: rgba(147, 51, 234, 0.2);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        overflow-x: hidden;
+        transition:
+          background-color 0.5s ease,
+          color 0.5s ease;
+        min-height: 100vh;
+      }
+
+      .ambient-light {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(100px);
+        z-index: -1;
+        pointer-events: none;
+        animation: float 20s infinite alternate ease-in-out;
+      }
+      .ambient-1 {
+        top: -10%;
+        left: -10%;
+        width: 50vw;
+        height: 50vw;
+        background: var(--blob-1);
+      }
+      .ambient-2 {
+        bottom: -20%;
+        right: -10%;
+        width: 60vw;
+        height: 60vw;
+        background: var(--blob-2);
+        animation-delay: -10s;
+      }
+      @keyframes float {
+        0% {
+          transform: translate(0, 0) scale(1);
+        }
+        100% {
+          transform: translate(5%, 5%) scale(1.1);
+        }
+      }
+
+      #loader {
+        position: fixed;
+        inset: 0;
+        background: var(--bg-color);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition:
+          opacity 0.6s ease,
+          visibility 0.6s;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--glass-border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s cubic-bezier(0.6, 0.2, 0.4, 0.8) infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      body.loaded #loader {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-weight: 700;
+        letter-spacing: -0.03em;
+      }
+      .text-gradient {
+        background: linear-gradient(
+          135deg,
+          var(--text-main),
+          var(--text-muted)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .animate-up {
+        opacity: 0;
+        transform: translateY(30px);
+        animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      @keyframes slideUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .d-1 {
+        animation-delay: 0.1s;
+      }
+      .d-2 {
+        animation-delay: 0.2s;
+      }
+      .d-3 {
+        animation-delay: 0.3s;
+      }
+
+      .glass-panel {
+        background: var(--glass-bg);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--glass-border);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.05),
+          var(--glass-shadow);
+        border-radius: 24px;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .navbar {
+        padding: 1.5rem 0;
+        background: transparent;
+      }
+      .navbar-brand {
+        font-weight: 800;
+        font-size: 1.75rem;
+        color: var(--text-main) !important;
+        letter-spacing: -1px;
+      }
+      .nav-link {
+        color: var(--text-muted) !important;
+        font-weight: 500;
+        font-size: 0.95rem;
+        margin: 0 0.5rem;
+        transition: color 0.3s;
+      }
+      .nav-link:hover {
+        color: var(--text-main) !important;
+      }
+
+      .btn-glass {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        color: var(--text-main);
+        border-radius: 12px;
+        padding: 0.6rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+      }
+      .btn-glass:hover {
+        background: var(--glass-hover);
+        border-color: var(--accent);
+        transform: translateY(-2px);
+        color: var(--text-main);
+      }
+      .btn-primary-custom {
+        background: var(--accent);
+        color: #fff !important;
+        border: none;
+      }
+      .btn-primary-custom:hover {
+        background: var(--accent-hover);
+        box-shadow: 0 0 20px var(--accent-glow);
+        color: #fff !important;
+      }
+      .btn-icon {
+        width: 42px;
+        height: 42px;
+        padding: 0;
+        border-radius: 50%;
+      }
+
+      .hero-section {
+        padding: 5rem 0 3rem;
+      }
+      .hero-title {
+        font-size: clamp(2.5rem, 5vw, 4rem);
+        line-height: 1.1;
+        margin-bottom: 1.5rem;
+      }
+
+      .input-group-glass {
+        display: flex;
+        gap: 0.5rem;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        padding: 0.5rem;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 600px;
+        backdrop-filter: blur(12px);
+        transition: border-color 0.3s;
+      }
+      .input-group-glass:focus-within {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 4px var(--accent-glow);
+      }
+      .input-group-glass input {
+        flex-grow: 1;
+        background: transparent;
+        border: none;
+        color: var(--text-main);
+        padding: 0.8rem 1rem;
+        outline: none;
+        font-size: 1rem;
+      }
+      .input-group-glass input::placeholder {
+        color: var(--text-muted);
+      }
+
+      .chip-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+      }
+      .chip {
+        background: transparent;
+        border: 1px solid var(--glass-border);
+        color: var(--text-muted);
+        padding: 0.5rem 1.2rem;
+        border-radius: 40px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .chip:hover {
+        border-color: var(--text-muted);
+        color: var(--text-main);
+      }
+      .chip.active {
+        background: var(--text-main);
+        color: var(--bg-color);
+        border-color: var(--text-main);
+      }
+
+      .tag-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .tag-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        border-radius: 50%;
+        box-shadow: 0 0 10px var(--accent);
+      }
+      .tag-text {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+      }
+
+      .featured-card {
+        display: flex;
+        flex-direction: column;
+        text-decoration: none;
+        color: inherit;
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 2rem;
+      }
+      .featured-card:hover {
+        transform: translateY(-5px);
+        color: inherit;
+      }
+      .featured-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        box-shadow: 0 0 0 1px var(--accent);
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+      }
+      .featured-card:hover::after {
+        opacity: 0.5;
+      }
+
+      .featured-img-wrapper {
+        width: 100%;
+        height: 420px;
+        overflow: hidden;
+        border-radius: 24px 24px 0 0;
+      }
+      .featured-img-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .featured-card:hover .featured-img-wrapper img {
+        transform: scale(1.05);
+      }
+
+      .featured-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: var(--accent);
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 0.35rem 0.9rem;
+        border-radius: 40px;
+        margin-bottom: 1rem;
+      }
+
+      .featured-content {
+        padding: 2.5rem;
+      }
+      .featured-title {
+        font-size: clamp(1.6rem, 3vw, 2.2rem);
+        line-height: 1.2;
+        margin-bottom: 1rem;
+      }
+      .featured-excerpt {
+        color: var(--text-muted);
+        font-size: 1.05rem;
+        line-height: 1.7;
+        margin-bottom: 1.5rem;
+      }
+
+      .card-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        padding-top: 1.2rem;
+        border-top: 1px solid var(--glass-border);
+      }
+      .meta-author-sm {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .meta-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid var(--glass-border);
+      }
+
+      .posts-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+      @media (max-width: 768px) {
+        .posts-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .post-card {
+        display: flex;
+        flex-direction: column;
+        text-decoration: none;
+        color: inherit;
+        overflow: hidden;
+        position: relative;
+        height: 100%;
+      }
+      .post-card:hover {
+        transform: translateY(-5px);
+        color: inherit;
+      }
+      .post-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        box-shadow: 0 0 0 1px var(--accent);
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+      }
+      .post-card:hover::after {
+        opacity: 0.5;
+      }
+
+      .post-img-wrapper {
+        width: 100%;
+        height: 200px;
+        overflow: hidden;
+        border-radius: 24px 24px 0 0;
+      }
+      .post-img-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .post-card:hover .post-img-wrapper img {
+        transform: scale(1.05);
+      }
+
+      .post-content {
+        padding: 1.75rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+      }
+      .post-title-sm {
+        font-size: 1.2rem;
+        line-height: 1.35;
+        margin-bottom: 0.75rem;
+        color: var(--text-main);
+      }
+      .post-excerpt {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+        line-height: 1.6;
+        margin-bottom: 1.25rem;
+        flex-grow: 1;
+      }
+
+      .list-post {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+        padding: 1.25rem;
+        border-radius: 16px;
+        text-decoration: none;
+        color: inherit;
+        transition: background 0.3s;
+        margin-left: -1.25rem;
+        margin-right: -1.25rem;
+      }
+      .list-post:hover {
+        background: var(--glass-hover);
+        color: inherit;
+      }
+      .list-post + .list-post {
+        border-top: 1px solid var(--glass-border);
+      }
+      .list-post-img {
+        width: 90px;
+        height: 72px;
+        border-radius: 12px;
+        object-fit: cover;
+        flex-shrink: 0;
+      }
+      .list-post-body {
+        flex-grow: 1;
+      }
+      .list-post-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        line-height: 1.35;
+        margin-bottom: 0.3rem;
+        color: var(--text-main);
+      }
+      .list-post-meta {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+      .list-post-tag {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        border: 1px solid var(--glass-border);
+        color: var(--text-muted);
+      }
+
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        position: sticky;
+        top: 2rem;
+      }
+      .widget {
+        padding: 2rem;
+      }
+      .widget-title {
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .trend-item {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--glass-border);
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.2s;
+      }
+      .trend-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+      .trend-item:hover {
+        color: var(--accent);
+      }
+      .trend-num {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--glass-border);
+        line-height: 1;
+        flex-shrink: 0;
+        min-width: 28px;
+      }
+      .trend-item:hover .trend-num {
+        color: var(--accent);
+      }
+      .trend-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        line-height: 1.35;
+      }
+      .trend-meta {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.2rem;
+      }
+
+      .author-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--glass-border);
+        text-decoration: none;
+        color: inherit;
+        transition: background 0.2s;
+      }
+      .author-row:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+      .author-avatar-sm {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid var(--glass-border);
+      }
+      .author-info-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+      .author-info-count {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+
+      .pagination-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+      }
+      .page-btn {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        color: var(--text-muted);
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+      }
+      .page-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .page-btn.active {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .page-btn.wide {
+        width: auto;
+        padding: 0 1rem;
+      }
+
+      @media (max-width: 991px) {
+        .sidebar {
+          position: static;
+        }
+        .featured-img-wrapper {
+          height: 280px;
+        }
+      }
+      @media (max-width: 576px) {
+        .featured-img-wrapper {
+          height: 220px;
+        }
+        .list-post-img {
+          width: 72px;
+          height: 58px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loader"><div class="spinner"></div></div>
+    <div class="ambient-light ambient-1"></div>
+    <div class="ambient-light ambient-2"></div>
+
+    <nav class="navbar navbar-expand-lg animate-up d-1">
+      <div class="container">
+        <a class="navbar-brand" href="index.html">Blog</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          style="border-color: var(--glass-border)"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            fill="var(--text-main)"
+            viewBox="0 0 16 16"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"
+            />
+          </svg>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto ms-lg-4">
+            <li class="nav-item active">
+              <a
+                class="nav-link"
+                href="index.html"
+                style="color: var(--text-main) !important"
+                >Home</a
+              >
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link" href="about.html">About</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="contact.html">Contact</a>
+            </li>
+          </ul>
+          <div class="d-flex gap-3 align-items-center mt-3 mt-lg-0">
+            <button
+              id="theme-toggle"
+              class="btn-glass btn-icon"
+              aria-label="Toggle theme"
+            >
+              <svg
+                id="icon-sun"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+              <svg
+                id="icon-moon"
+                style="display: none"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+                ></path>
+              </svg>
+            </button>
+            <a href="login.html"><button class="btn-glass">Log in</button></a>
+            <a href="register.html"
+              ><button class="btn-glass btn-primary-custom">Register</button></a
+            >
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <header class="hero-section container animate-up d-2">
+      <div class="row">
+        <div class="col-lg-9">
+          <h1 class="hero-title">
+            All <span class="text-gradient">Articles</span> &amp; Deep Dives
+          </h1>
+          <p class="text-muted fs-5 mb-5" style="max-width: 600px">
+            Detailed teardowns of backend architecture, high-performance
+            execution, and beautiful UI engineering.
+          </p>
+          <div class="input-group-glass">
+            <input
+              type="text"
+              id="search-input"
+              placeholder="Search articles, topics, authors..."
+            />
+            <button
+              class="btn-glass btn-primary-custom"
+              style="padding: 0.5rem 1.2rem; border-radius: 12px"
+            >
+              Search
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container mb-5 pb-5 animate-up d-3">
+      <div class="row g-5">
+        <div class="col-lg-8">
+          <div class="chip-container">
+            <button class="chip active" data-filter="all">All Topics</button>
+            <button class="chip" data-filter="architecture">
+              Architecture
+            </button>
+            <button class="chip" data-filter="frontend">Frontend UI</button>
+            <button class="chip" data-filter="backend">Backend</button>
+            <button class="chip" data-filter="devops">DevOps</button>
+            <button class="chip" data-filter="datastores">Data Stores</button>
+          </div>
+
+          <a
+            href="blog-post.html"
+            class="glass-panel featured-card"
+            data-category="architecture"
+          >
+            <div class="featured-img-wrapper">
+              <img
+                src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80"
+                alt="Featured Post"
+              />
+            </div>
+            <div class="featured-content">
+              <div class="featured-badge">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="11"
+                  height="11"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                  />
+                </svg>
+                Featured
+              </div>
+              <div class="tag-wrap">
+                <div class="tag-dot"></div>
+                <span class="tag-text">System Design</span>
+              </div>
+              <h2 class="featured-title">
+                Structuring Scalable Game Economies with Redis
+              </h2>
+              <p class="featured-excerpt">
+                A deep dive into managing heavy concurrent data transactions
+                securely without throttling server memory or risking player data
+                loss using distributed ledgers and atomic operations.
+              </p>
+              <div class="card-meta">
+                <div class="meta-author-sm">
+                  <img
+                    src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=80&q=80"
+                    class="meta-avatar"
+                    alt="Author"
+                  />
+                  <span>Alex Chen</span>
+                </div>
+                <div style="display: flex; gap: 1.5rem">
+                  <span>April 20, 2026</span>
+                  <span>8 min read</span>
+                </div>
+              </div>
+            </div>
+          </a>
+
+          <div class="posts-grid" id="posts-grid">
+            <a
+              href="blog-post.html"
+              class="glass-panel post-card"
+              data-category="frontend"
+              data-title="Fluid Web Interfaces with CSS Variables"
+            >
+              <div class="post-img-wrapper">
+                <img
+                  src="https://images.unsplash.com/photo-1618761714954-0b8cd0026356?auto=format&fit=crop&w=800&q=80"
+                  loading="lazy"
+                  alt="Post"
+                />
+              </div>
+              <div class="post-content">
+                <div class="tag-wrap">
+                  <div
+                    class="tag-dot"
+                    style="background: #10b981; box-shadow: 0 0 10px #10b981"
+                  ></div>
+                  <span class="tag-text">Frontend</span>
+                </div>
+                <h3 class="post-title-sm">
+                  Fluid Web Interfaces with CSS Variables
+                </h3>
+                <p class="post-excerpt">
+                  Moving away from rigid frames to dynamic, physics-based UI
+                  components that respond to user intent in real time.
+                </p>
+                <div class="card-meta">
+                  <div class="meta-author-sm">
+                    <img
+                      src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=80&q=80"
+                      class="meta-avatar"
+                      alt="Author"
+                    />
+                    <span>Sara Kim</span>
+                  </div>
+                  <span>5 min</span>
+                </div>
+              </div>
+            </a>
+
+            <a
+              href="blog-post.html"
+              class="glass-panel post-card"
+              data-category="backend"
+              data-title="Client Interpolation and Packet Loss"
+            >
+              <div class="post-img-wrapper">
+                <img
+                  src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80"
+                  loading="lazy"
+                  alt="Post"
+                />
+              </div>
+              <div class="post-content">
+                <div class="tag-wrap">
+                  <div
+                    class="tag-dot"
+                    style="background: #f59e0b; box-shadow: 0 0 10px #f59e0b"
+                  ></div>
+                  <span class="tag-text">Backend</span>
+                </div>
+                <h3 class="post-title-sm">
+                  Client Interpolation &amp; Packet Loss
+                </h3>
+                <p class="post-excerpt">
+                  Handling complex positional logic locally to completely
+                  eliminate visual stutter and packet loss artifacts.
+                </p>
+                <div class="card-meta">
+                  <div class="meta-author-sm">
+                    <img
+                      src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=80&q=80"
+                      class="meta-avatar"
+                      alt="Author"
+                    />
+                    <span>Alex Chen</span>
+                  </div>
+                  <span>6 min</span>
+                </div>
+              </div>
+            </a>
+
+            <a
+              href="blog-post.html"
+              class="glass-panel post-card"
+              data-category="devops"
+              data-title="Zero-Downtime Deployments with Kubernetes"
+            >
+              <div class="post-img-wrapper">
+                <img
+                  src="https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?auto=format&fit=crop&w=800&q=80"
+                  loading="lazy"
+                  alt="Post"
+                />
+              </div>
+              <div class="post-content">
+                <div class="tag-wrap">
+                  <div
+                    class="tag-dot"
+                    style="background: #8b5cf6; box-shadow: 0 0 10px #8b5cf6"
+                  ></div>
+                  <span class="tag-text">DevOps</span>
+                </div>
+                <h3 class="post-title-sm">
+                  Zero-Downtime Deploys with Kubernetes
+                </h3>
+                <p class="post-excerpt">
+                  Rolling updates, blue-green strategies, and health checks that
+                  keep your service live through every release.
+                </p>
+                <div class="card-meta">
+                  <div class="meta-author-sm">
+                    <img
+                      src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=80&q=80"
+                      class="meta-avatar"
+                      alt="Author"
+                    />
+                    <span>Marco Rossi</span>
+                  </div>
+                  <span>7 min</span>
+                </div>
+              </div>
+            </a>
+
+            <a
+              href="blog-post.html"
+              class="glass-panel post-card"
+              data-category="datastores"
+              data-title="PostgreSQL Query Optimization"
+            >
+              <div class="post-img-wrapper">
+                <img
+                  src="https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&w=800&q=80"
+                  loading="lazy"
+                  alt="Post"
+                />
+              </div>
+              <div class="post-content">
+                <div class="tag-wrap">
+                  <div
+                    class="tag-dot"
+                    style="background: #ef4444; box-shadow: 0 0 10px #ef4444"
+                  ></div>
+                  <span class="tag-text">Data Stores</span>
+                </div>
+                <h3 class="post-title-sm">
+                  PostgreSQL Query Optimization at Scale
+                </h3>
+                <p class="post-excerpt">
+                  Index strategies, query planner hints, and EXPLAIN ANALYZE
+                  patterns that cut p99 latency in half.
+                </p>
+                <div class="card-meta">
+                  <div class="meta-author-sm">
+                    <img
+                      src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=80&q=80"
+                      class="meta-avatar"
+                      alt="Author"
+                    />
+                    <span>Sara Kim</span>
+                  </div>
+                  <span>9 min</span>
+                </div>
+              </div>
+            </a>
+
+            <a
+              href="blog-post.html"
+              class="glass-panel post-card"
+              data-category="architecture"
+              data-title="Event-Driven Microservices with Kafka"
+            >
+              <div class="post-img-wrapper">
+                <img
+                  src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80"
+                  loading="lazy"
+                  alt="Post"
+                />
+              </div>
+              <div class="post-content">
+                <div class="tag-wrap">
+                  <div class="tag-dot"></div>
+                  <span class="tag-text">Architecture</span>
+                </div>
+                <h3 class="post-title-sm">
+                  Event-Driven Microservices with Kafka
+                </h3>
+                <p class="post-excerpt">
+                  Designing loosely coupled systems that scale independently and
+                  recover gracefully from partial failures.
+                </p>
+                <div class="card-meta">
+                  <div class="meta-author-sm">
+                    <img
+                      src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=80&q=80"
+                      class="meta-avatar"
+                      alt="Author"
+                    />
+                    <span>Marco Rossi</span>
+                  </div>
+                  <span>11 min</span>
+                </div>
+              </div>
+            </a>
+
+            <a
+              href="blog-post.html"
+              class="glass-panel post-card"
+              data-category="frontend"
+              data-title="WebGL Shaders for UI Backgrounds"
+            >
+              <div class="post-img-wrapper">
+                <img
+                  src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80"
+                  loading="lazy"
+                  alt="Post"
+                />
+              </div>
+              <div class="post-content">
+                <div class="tag-wrap">
+                  <div
+                    class="tag-dot"
+                    style="background: #10b981; box-shadow: 0 0 10px #10b981"
+                  ></div>
+                  <span class="tag-text">Frontend</span>
+                </div>
+                <h3 class="post-title-sm">WebGL Shaders for UI Backgrounds</h3>
+                <p class="post-excerpt">
+                  Writing performant GLSL fragment shaders that run at 60fps
+                  inside a regular web page with zero overhead.
+                </p>
+                <div class="card-meta">
+                  <div class="meta-author-sm">
+                    <img
+                      src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=80&q=80"
+                      class="meta-avatar"
+                      alt="Author"
+                    />
+                    <span>Alex Chen</span>
+                  </div>
+                  <span>6 min</span>
+                </div>
+              </div>
+            </a>
+          </div>
+
+          <div class="glass-panel p-4 mb-4">
+            <h4
+              class="widget-title"
+              style="font-size: 1.1rem; margin-bottom: 1.5rem"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+              </svg>
+              More Articles
+            </h4>
+
+            <a
+              href="blog-post.html"
+              class="list-post"
+              data-category="devops"
+              data-title="Custom Physics Nodes Setup"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=150&q=80"
+                class="list-post-img"
+                loading="lazy"
+                alt="Post"
+              />
+              <div class="list-post-body">
+                <div class="list-post-title">
+                  Custom Physics Nodes Setup &amp; Optimization
+                </div>
+                <div class="list-post-meta">
+                  <span class="list-post-tag">DevOps</span>
+                  <span>April 12, 2026</span>
+                  <span>7 min read</span>
+                </div>
+              </div>
+            </a>
+
+            <a
+              href="blog-post.html"
+              class="list-post"
+              data-category="architecture"
+              data-title="Dynamic Module Loading"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1537884944318-390069bb8665?auto=format&fit=crop&w=150&q=80"
+                class="list-post-img"
+                loading="lazy"
+                alt="Post"
+              />
+              <div class="list-post-body">
+                <div class="list-post-title">
+                  Dynamic Module Loading in Large-Scale Apps
+                </div>
+                <div class="list-post-meta">
+                  <span class="list-post-tag">Architecture</span>
+                  <span>April 08, 2026</span>
+                  <span>5 min read</span>
+                </div>
+              </div>
+            </a>
+
+            <a
+              href="blog-post.html"
+              class="list-post"
+              data-category="backend"
+              data-title="Memory Optimization Specs"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=150&q=80"
+                class="list-post-img"
+                loading="lazy"
+                alt="Post"
+              />
+              <div class="list-post-body">
+                <div class="list-post-title">
+                  Memory Optimization Specs for Node.js Services
+                </div>
+                <div class="list-post-meta">
+                  <span class="list-post-tag">Backend</span>
+                  <span>April 02, 2026</span>
+                  <span>8 min read</span>
+                </div>
+              </div>
+            </a>
+
+            <a
+              href="blog-post.html"
+              class="list-post"
+              data-category="datastores"
+              data-title="TimescaleDB for Real-Time Analytics"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=150&q=80"
+                class="list-post-img"
+                loading="lazy"
+                alt="Post"
+              />
+              <div class="list-post-body">
+                <div class="list-post-title">
+                  TimescaleDB for Real-Time Game Analytics
+                </div>
+                <div class="list-post-meta">
+                  <span class="list-post-tag">Data Stores</span>
+                  <span>March 28, 2026</span>
+                  <span>10 min read</span>
+                </div>
+              </div>
+            </a>
+
+            <a
+              href="blog-post.html"
+              class="list-post"
+              data-category="frontend"
+              data-title="Accessible Component Design"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1593720213428-28a5b9e94613?auto=format&fit=crop&w=150&q=80"
+                class="list-post-img"
+                loading="lazy"
+                alt="Post"
+              />
+              <div class="list-post-body">
+                <div class="list-post-title">
+                  Accessible Component Design Without Sacrificing Style
+                </div>
+                <div class="list-post-meta">
+                  <span class="list-post-tag">Frontend</span>
+                  <span>March 22, 2026</span>
+                  <span>6 min read</span>
+                </div>
+              </div>
+            </a>
+          </div>
+
+          <div id="no-results" style="display: none" class="text-center py-5">
+            <p style="font-size: 1.1rem; color: var(--text-muted)">
+              No articles found. Try a different search or filter.
+            </p>
+          </div>
+
+          <div class="pagination-wrap">
+            <a href="#" class="page-btn wide">←</a>
+            <a href="#" class="page-btn active">1</a>
+            <a href="#" class="page-btn">2</a>
+            <a href="#" class="page-btn">3</a>
+            <span class="page-btn" style="cursor: default; border: none"
+              >…</span
+            >
+            <a href="#" class="page-btn">8</a>
+            <a href="#" class="page-btn wide">→</a>
+          </div>
+        </div>
+
+        <aside class="col-lg-4">
+          <div class="sidebar">
+            <div class="glass-panel widget">
+              <h4 class="widget-title">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                  <polyline points="17 6 23 6 23 12"></polyline>
+                </svg>
+                Trending
+              </h4>
+              <a href="blog-post.html" class="trend-item">
+                <span class="trend-num">01</span>
+                <div>
+                  <div class="trend-title">
+                    Scalable Game Economies with Redis
+                  </div>
+                  <div class="trend-meta">3.2k views · System Design</div>
+                </div>
+              </a>
+              <a href="blog-post.html" class="trend-item">
+                <span class="trend-num">02</span>
+                <div>
+                  <div class="trend-title">
+                    Event-Driven Microservices with Kafka
+                  </div>
+                  <div class="trend-meta">2.8k views · Architecture</div>
+                </div>
+              </a>
+              <a href="blog-post.html" class="trend-item">
+                <span class="trend-num">03</span>
+                <div>
+                  <div class="trend-title">
+                    PostgreSQL Query Optimization at Scale
+                  </div>
+                  <div class="trend-meta">2.1k views · Data Stores</div>
+                </div>
+              </a>
+              <a href="blog-post.html" class="trend-item">
+                <span class="trend-num">04</span>
+                <div>
+                  <div class="trend-title">
+                    WebGL Shaders for UI Backgrounds
+                  </div>
+                  <div class="trend-meta">1.7k views · Frontend</div>
+                </div>
+              </a>
+            </div>
+
+            <div class="glass-panel widget">
+              <h4 class="widget-title">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                Top Authors
+              </h4>
+              <a href="Profile.html" class="author-row">
+                <img
+                  src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=80&q=80"
+                  class="author-avatar-sm"
+                  alt="Author"
+                />
+                <div>
+                  <div class="author-info-name">Alex Chen</div>
+                  <div class="author-info-count">14 articles · Backend</div>
+                </div>
+              </a>
+              <a href="blog-post.html" class="author-row">
+                <img
+                  src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=80&q=80"
+                  class="author-avatar-sm"
+                  alt="Author"
+                />
+                <div>
+                  <div class="author-info-name">Sara Kim</div>
+                  <div class="author-info-count">11 articles · Frontend</div>
+                </div>
+              </a>
+              <a href="blog-post.html" class="author-row">
+                <img
+                  src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=80&q=80"
+                  class="author-avatar-sm"
+                  alt="Author"
+                />
+                <div>
+                  <div class="author-info-name">Marco Rossi</div>
+                  <div class="author-info-count">9 articles · DevOps</div>
+                </div>
+              </a>
+            </div>
+
+            <div class="glass-panel widget">
+              <h4 class="widget-title">Browse Topics</h4>
+              <div style="display: flex; flex-wrap: wrap; gap: 0.4rem">
+                <a
+                  href="#"
+                  class="chip"
+                  style="
+                    border-radius: 40px;
+                    font-size: 0.82rem;
+                    padding: 0.4rem 1rem;
+                    text-decoration: none;
+                  "
+                  >Architecture</a
+                >
+                <a
+                  href="#"
+                  class="chip"
+                  style="
+                    border-radius: 40px;
+                    font-size: 0.82rem;
+                    padding: 0.4rem 1rem;
+                    text-decoration: none;
+                  "
+                  >Frontend UI</a
+                >
+                <a
+                  href="#"
+                  class="chip"
+                  style="
+                    border-radius: 40px;
+                    font-size: 0.82rem;
+                    padding: 0.4rem 1rem;
+                    text-decoration: none;
+                  "
+                  >Backend</a
+                >
+                <a
+                  href="#"
+                  class="chip"
+                  style="
+                    border-radius: 40px;
+                    font-size: 0.82rem;
+                    padding: 0.4rem 1rem;
+                    text-decoration: none;
+                  "
+                  >Data Stores</a
+                >
+                <a
+                  href="#"
+                  class="chip"
+                  style="
+                    border-radius: 40px;
+                    font-size: 0.82rem;
+                    padding: 0.4rem 1rem;
+                    text-decoration: none;
+                  "
+                  >DevOps</a
+                >
+                <a
+                  href="#"
+                  class="chip"
+                  style="
+                    border-radius: 40px;
+                    font-size: 0.82rem;
+                    padding: 0.4rem 1rem;
+                    text-decoration: none;
+                  "
+                  >Redis</a
+                >
+                <a
+                  href="#"
+                  class="chip"
+                  style="
+                    border-radius: 40px;
+                    font-size: 0.82rem;
+                    padding: 0.4rem 1rem;
+                    text-decoration: none;
+                  "
+                  >Kubernetes</a
+                >
+                <a
+                  href="#"
+                  class="chip"
+                  style="
+                    border-radius: 40px;
+                    font-size: 0.82rem;
+                    padding: 0.4rem 1rem;
+                    text-decoration: none;
+                  "
+                  >WebGL</a
+                >
+                <a
+                  href="#"
+                  class="chip"
+                  style="
+                    border-radius: 40px;
+                    font-size: 0.82rem;
+                    padding: 0.4rem 1rem;
+                    text-decoration: none;
+                  "
+                  >PostgreSQL</a
+                >
+                <a
+                  href="#"
+                  class="chip"
+                  style="
+                    border-radius: 40px;
+                    font-size: 0.82rem;
+                    padding: 0.4rem 1rem;
+                    text-decoration: none;
+                  "
+                  >Kafka</a
+                >
+              </div>
+            </div>
+
+            <div class="glass-panel widget">
+              <h4 class="widget-title">Newsletter</h4>
+              <p
+                class="text-muted"
+                style="font-size: 0.95rem; margin-bottom: 1.5rem"
+              >
+                Join 4,000+ developers. Get weekly architectural deep dives
+                right to your inbox.
+              </p>
+              <div style="display: flex; flex-direction: column; gap: 0.8rem">
+                <input
+                  type="email"
+                  placeholder="email@example.com"
+                  style="
+                    width: 100%;
+                    background: var(--bg-color);
+                    border: 1px solid var(--glass-border);
+                    padding: 0.8rem 1rem;
+                    border-radius: 12px;
+                    color: var(--text-main);
+                    outline: none;
+                  "
+                />
+                <button
+                  class="btn-glass btn-primary-custom"
+                  style="width: 100%; padding: 0.8rem; border-radius: 12px"
+                >
+                  Subscribe
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      window.addEventListener("load", () => {
+        setTimeout(() => document.body.classList.add("loaded"), 300);
+      });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const toggleBtn = document.getElementById("theme-toggle");
+        const iconSun = document.getElementById("icon-sun");
+        const iconMoon = document.getElementById("icon-moon");
+        const htmlTag = document.documentElement;
+        const savedTheme = localStorage.getItem("zairo-theme") || "dark";
+        setTheme(savedTheme);
+
+        toggleBtn.addEventListener("click", () => {
+          setTheme(
+            htmlTag.getAttribute("data-theme") === "dark" ? "light" : "dark",
+          );
+        });
+
+        function setTheme(theme) {
+          htmlTag.setAttribute("data-theme", theme);
+          localStorage.setItem("zairo-theme", theme);
+          iconSun.style.display = theme === "light" ? "none" : "block";
+          iconMoon.style.display = theme === "light" ? "block" : "none";
+        }
+
+        const chips = document.querySelectorAll(".chip[data-filter]");
+        const gridCards = document.querySelectorAll("#posts-grid .post-card");
+        const listPosts = document.querySelectorAll(".list-post");
+        const noResults = document.getElementById("no-results");
+        const searchInput = document.getElementById("search-input");
+
+        function filterPosts() {
+          const activeChip = document.querySelector(
+            ".chip.active[data-filter]",
+          );
+          const filter = activeChip ? activeChip.dataset.filter : "all";
+          const query = searchInput.value.toLowerCase().trim();
+
+          let anyVisible = false;
+
+          [...gridCards, ...listPosts].forEach((el) => {
+            const cat = el.dataset.category || "";
+            const title = (
+              el.dataset.title ||
+              el.querySelector(".post-title-sm, .list-post-title")
+                ?.textContent ||
+              ""
+            ).toLowerCase();
+            const matchFilter = filter === "all" || cat === filter;
+            const matchSearch =
+              !query || title.includes(query) || cat.includes(query);
+            const show = matchFilter && matchSearch;
+            el.style.display = show ? "" : "none";
+            if (show) anyVisible = true;
+          });
+
+          noResults.style.display = anyVisible ? "none" : "block";
+        }
+
+        chips.forEach((chip) => {
+          chip.addEventListener("click", () => {
+            chips.forEach((c) => c.classList.remove("active"));
+            chip.classList.add("active");
+            filterPosts();
+          });
+        });
+
+        searchInput.addEventListener("input", filterPosts);
+
+        document.querySelectorAll(".page-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (btn.classList.contains("active")) return;
+            document
+              .querySelectorAll(".page-btn")
+              .forEach((b) => b.classList.remove("active"));
+            if (!isNaN(parseInt(btn.textContent))) btn.classList.add("active");
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1078 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blog | Contact</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-color: #030303;
+        --text-main: #ffffff;
+        --text-muted: #8b949e;
+        --glass-bg: rgba(255, 255, 255, 0.02);
+        --glass-border: rgba(255, 255, 255, 0.06);
+        --glass-hover: rgba(255, 255, 255, 0.05);
+        --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        --accent: #3b82f6;
+        --accent-glow: rgba(59, 130, 246, 0.4);
+        --accent-hover: #2563eb;
+        --blob-1: rgba(59, 130, 246, 0.15);
+        --blob-2: rgba(147, 51, 234, 0.15);
+      }
+      [data-theme="light"] {
+        --bg-color: #f0f2f5;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --glass-bg: rgba(255, 255, 255, 0.6);
+        --glass-border: rgba(0, 0, 0, 0.05);
+        --glass-hover: rgba(255, 255, 255, 0.9);
+        --glass-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+        --accent: #0f172a;
+        --accent-glow: rgba(15, 23, 42, 0.2);
+        --accent-hover: #1e293b;
+        --blob-1: rgba(59, 130, 246, 0.2);
+        --blob-2: rgba(147, 51, 234, 0.2);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        overflow-x: hidden;
+        transition:
+          background-color 0.5s ease,
+          color 0.5s ease;
+        min-height: 100vh;
+      }
+
+      .ambient-light {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(100px);
+        z-index: -1;
+        pointer-events: none;
+        animation: float 20s infinite alternate ease-in-out;
+      }
+      .ambient-1 {
+        top: -10%;
+        left: -10%;
+        width: 50vw;
+        height: 50vw;
+        background: var(--blob-1);
+      }
+      .ambient-2 {
+        bottom: -20%;
+        right: -10%;
+        width: 60vw;
+        height: 60vw;
+        background: var(--blob-2);
+        animation-delay: -10s;
+      }
+      @keyframes float {
+        0% {
+          transform: translate(0, 0) scale(1);
+        }
+        100% {
+          transform: translate(5%, 5%) scale(1.1);
+        }
+      }
+
+      #loader {
+        position: fixed;
+        inset: 0;
+        background: var(--bg-color);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition:
+          opacity 0.6s ease,
+          visibility 0.6s;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--glass-border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s cubic-bezier(0.6, 0.2, 0.4, 0.8) infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      body.loaded #loader {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-weight: 700;
+        letter-spacing: -0.03em;
+      }
+      .text-gradient {
+        background: linear-gradient(
+          135deg,
+          var(--text-main),
+          var(--text-muted)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .animate-up {
+        opacity: 0;
+        transform: translateY(30px);
+        animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      @keyframes slideUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .d-1 {
+        animation-delay: 0.1s;
+      }
+      .d-2 {
+        animation-delay: 0.2s;
+      }
+      .d-3 {
+        animation-delay: 0.3s;
+      }
+      .d-4 {
+        animation-delay: 0.4s;
+      }
+
+      .glass-panel {
+        background: var(--glass-bg);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--glass-border);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.05),
+          var(--glass-shadow);
+        border-radius: 24px;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .navbar {
+        padding: 1.5rem 0;
+        background: transparent;
+      }
+      .navbar-brand {
+        font-weight: 800;
+        font-size: 1.75rem;
+        color: var(--text-main) !important;
+        letter-spacing: -1px;
+      }
+      .nav-link {
+        color: var(--text-muted) !important;
+        font-weight: 500;
+        font-size: 0.95rem;
+        margin: 0 0.5rem;
+        transition: color 0.3s;
+      }
+      .nav-link:hover {
+        color: var(--text-main) !important;
+      }
+
+      .btn-glass {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        color: var(--text-main);
+        border-radius: 12px;
+        padding: 0.6rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+      }
+      .btn-glass:hover {
+        background: var(--glass-hover);
+        border-color: var(--accent);
+        transform: translateY(-2px);
+        color: var(--text-main);
+      }
+      .btn-primary-custom {
+        background: var(--accent);
+        color: #fff !important;
+        border: none;
+      }
+      .btn-primary-custom:hover {
+        background: var(--accent-hover);
+        box-shadow: 0 0 20px var(--accent-glow);
+        color: #fff !important;
+      }
+      .btn-icon {
+        width: 42px;
+        height: 42px;
+        padding: 0;
+        border-radius: 50%;
+      }
+
+      .hero-section {
+        padding: 5rem 0 3rem;
+      }
+      .hero-title {
+        font-size: clamp(2.5rem, 5vw, 4rem);
+        line-height: 1.1;
+        margin-bottom: 1.5rem;
+      }
+
+      .tag-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .tag-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        border-radius: 50%;
+        box-shadow: 0 0 10px var(--accent);
+      }
+      .tag-text {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+      }
+
+      .form-label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        display: block;
+      }
+      .form-input {
+        width: 100%;
+        background: var(--bg-color);
+        border: 1px solid var(--glass-border);
+        padding: 0.85rem 1rem;
+        border-radius: 12px;
+        color: var(--text-main);
+        outline: none;
+        font-family: inherit;
+        font-size: 0.95rem;
+        transition:
+          border-color 0.3s,
+          box-shadow 0.3s;
+        margin-bottom: 1.25rem;
+      }
+      .form-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 4px var(--accent-glow);
+      }
+      .form-input::placeholder {
+        color: var(--text-muted);
+      }
+
+      textarea.form-input {
+        resize: vertical;
+        min-height: 140px;
+        line-height: 1.6;
+      }
+
+      select.form-input {
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        padding-right: 2.5rem;
+        cursor: pointer;
+      }
+      select.form-input option {
+        background: #1a1a2e;
+        color: var(--text-main);
+      }
+
+      .contact-form-card {
+        padding: 2.5rem;
+      }
+
+      .contact-info-card {
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        height: 100%;
+      }
+
+      .info-item {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+        padding: 1.25rem 0;
+        border-bottom: 1px solid var(--glass-border);
+      }
+      .info-item:first-child {
+        padding-top: 0;
+      }
+      .info-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+      .info-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        flex-shrink: 0;
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent);
+      }
+      .info-label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        margin-bottom: 0.2rem;
+      }
+      .info-value {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-main);
+      }
+      .info-sub {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        margin-top: 0.1rem;
+      }
+
+      .social-row {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        margin-top: 0.25rem;
+      }
+      .social-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.45rem 0.9rem;
+        border-radius: 10px;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s;
+      }
+      .social-link:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        transform: translateY(-2px);
+      }
+
+      .faq-item {
+        border-bottom: 1px solid var(--glass-border);
+        overflow: hidden;
+      }
+      .faq-item:last-child {
+        border-bottom: none;
+      }
+      .faq-question {
+        width: 100%;
+        background: none;
+        border: none;
+        text-align: left;
+        padding: 1.25rem 0;
+        color: var(--text-main);
+        font-family: inherit;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        transition: color 0.2s;
+      }
+      .faq-question:hover {
+        color: var(--accent);
+      }
+      .faq-arrow {
+        flex-shrink: 0;
+        color: var(--text-muted);
+        transition: transform 0.3s ease;
+      }
+      .faq-item.open .faq-arrow {
+        transform: rotate(180deg);
+      }
+      .faq-answer {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .faq-item.open .faq-answer {
+        max-height: 200px;
+      }
+      .faq-answer p {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        line-height: 1.7;
+        padding-bottom: 1.25rem;
+        margin: 0;
+      }
+
+      .success-toast {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: var(--accent);
+        color: #fff;
+        padding: 1rem 1.5rem;
+        border-radius: 14px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4);
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 9000;
+      }
+      .success-toast.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      @media (max-width: 991px) {
+        .contact-info-card {
+          margin-bottom: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loader"><div class="spinner"></div></div>
+    <div class="ambient-light ambient-1"></div>
+    <div class="ambient-light ambient-2"></div>
+
+    <div class="success-toast" id="success-toast">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      Message sent! We'll reply within 24 hours.
+    </div>
+
+    <nav class="navbar navbar-expand-lg animate-up d-1">
+      <div class="container">
+        <a class="navbar-brand" href="index.html">Blog</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          style="border-color: var(--glass-border)"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            fill="var(--text-main)"
+            viewBox="0 0 16 16"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"
+            />
+          </svg>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto ms-lg-4">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="about.html">About</a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                href="contact.html"
+                style="color: var(--text-main) !important"
+                >Contact</a
+              >
+            </li>
+          </ul>
+          <div class="d-flex gap-3 align-items-center mt-3 mt-lg-0">
+            <button
+              id="theme-toggle"
+              class="btn-glass btn-icon"
+              aria-label="Toggle theme"
+            >
+              <svg
+                id="icon-sun"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+              <svg
+                id="icon-moon"
+                style="display: none"
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+                ></path>
+              </svg>
+            </button>
+            <a href="login.html"><button class="btn-glass">Log in</button></a>
+            <a href="register.html"
+              ><button class="btn-glass btn-primary-custom">Register</button></a
+            >
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <header class="hero-section container animate-up d-2">
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="tag-wrap">
+            <div class="tag-dot"></div>
+            <span class="tag-text">Get In Touch</span>
+          </div>
+          <h1 class="hero-title">
+            We read every<br /><span class="text-gradient">message.</span>
+          </h1>
+          <p
+            class="text-muted fs-5 mb-0"
+            style="max-width: 560px; line-height: 1.75"
+          >
+            Whether it's a topic request, collaboration idea, bug report, or
+            just to say hello — drop us a message and we'll get back to you
+            within 24 hours.
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <main class="container mb-5 pb-5 animate-up d-3">
+      <div class="row g-4 mb-5">
+        <div class="col-lg-8 order-lg-1 order-2">
+          <div class="glass-panel contact-form-card">
+            <h3 style="font-size: 1.4rem; margin-bottom: 0.5rem">
+              Send a message
+            </h3>
+            <p class="text-muted mb-4" style="font-size: 0.9rem">
+              Fill out the form and we'll reply to your inbox.
+            </p>
+
+            <div class="row g-0">
+              <div class="col-sm-6 pe-sm-2">
+                <label class="form-label">First Name</label>
+                <input
+                  type="text"
+                  class="form-input"
+                  id="first-name"
+                  placeholder="John"
+                />
+              </div>
+              <div class="col-sm-6 ps-sm-2">
+                <label class="form-label">Last Name</label>
+                <input
+                  type="text"
+                  class="form-input"
+                  id="last-name"
+                  placeholder="Doe"
+                />
+              </div>
+            </div>
+
+            <label class="form-label">Email Address</label>
+            <input
+              type="email"
+              class="form-input"
+              id="email"
+              placeholder="name@domain.com"
+            />
+
+            <label class="form-label">Subject</label>
+            <select class="form-input" id="subject">
+              <option value="" disabled selected>Choose a topic...</option>
+              <option value="topic">Article Topic Request</option>
+              <option value="collab">Collaboration / Guest Post</option>
+              <option value="sponsorship">Sponsorship Inquiry</option>
+              <option value="feedback">Feedback or Bug Report</option>
+              <option value="other">Other</option>
+            </select>
+
+            <label class="form-label">Message</label>
+            <textarea
+              class="form-input"
+              id="message"
+              placeholder="Tell us what's on your mind..."
+            ></textarea>
+
+            <div
+              class="d-flex align-items-center justify-content-between flex-wrap gap-3"
+            >
+              <p class="text-muted m-0" style="font-size: 0.82rem">
+                We typically respond within 24 hours.
+              </p>
+              <button
+                class="btn-glass btn-primary-custom"
+                id="send-btn"
+                style="
+                  padding: 0.8rem 2.5rem;
+                  font-size: 1rem;
+                  border-radius: 12px;
+                "
+              >
+                Send Message
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 order-lg-2 order-1">
+          <div class="glass-panel contact-info-card">
+            <h4 style="font-size: 1.15rem; margin-bottom: 1.5rem">
+              Contact Info
+            </h4>
+
+            <div class="info-item">
+              <div class="info-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                  ></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+              </div>
+              <div>
+                <div class="info-label">Email</div>
+                <div class="info-value">hello@zairo.blog</div>
+                <div class="info-sub">For general inquiries</div>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <div
+                class="info-icon"
+                style="
+                  background: rgba(16, 185, 129, 0.1);
+                  border-color: rgba(16, 185, 129, 0.2);
+                  color: #10b981;
+                "
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                  ></path>
+                </svg>
+              </div>
+              <div>
+                <div class="info-label">Discord</div>
+                <div class="info-value">discord.gg/zairo</div>
+                <div class="info-sub">Fastest response time</div>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <div
+                class="info-icon"
+                style="
+                  background: rgba(245, 158, 11, 0.1);
+                  border-color: rgba(245, 158, 11, 0.2);
+                  color: #f59e0b;
+                "
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+              <div>
+                <div class="info-label">Response Time</div>
+                <div class="info-value">Within 24 hours</div>
+                <div class="info-sub">Mon – Fri, 9am – 6pm UTC</div>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <div
+                class="info-icon"
+                style="
+                  background: rgba(139, 92, 246, 0.1);
+                  border-color: rgba(139, 92, 246, 0.2);
+                  color: #8b5cf6;
+                "
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"
+                  ></path>
+                </svg>
+              </div>
+              <div>
+                <div class="info-label">Social</div>
+                <div class="info-value" style="margin-bottom: 0.5rem">
+                  Follow us
+                </div>
+                <div class="social-row">
+                  <a href="#" class="social-link">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path
+                        d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+                      />
+                    </svg>
+                    Twitter
+                  </a>
+                  <a href="#" class="social-link">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path
+                        d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+                      />
+                    </svg>
+                    GitHub
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row animate-up d-4">
+        <div class="col-12">
+          <div class="glass-panel p-4">
+            <h4 style="font-size: 1.2rem; margin-bottom: 0.25rem">
+              Frequently Asked Questions
+            </h4>
+            <p class="text-muted mb-4" style="font-size: 0.9rem">
+              Quick answers to common questions.
+            </p>
+
+            <div class="faq-item">
+              <button class="faq-question">
+                Can I contribute an article to the blog?
+                <svg
+                  class="faq-arrow"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <div class="faq-answer">
+                <p>
+                  Yes! We welcome guest contributors. Send us your article idea
+                  via the contact form, selecting "Collaboration / Guest Post"
+                  as the subject. We'll review your pitch within 3–5 business
+                  days and get back to you with feedback.
+                </p>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question">
+                Do you accept sponsored content?
+                <svg
+                  class="faq-arrow"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <div class="faq-answer">
+                <p>
+                  We accept a limited number of sponsorships per month, only
+                  from products we've personally used and can genuinely
+                  recommend. All sponsored content is clearly labeled. Select
+                  "Sponsorship Inquiry" in the form above.
+                </p>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question">
+                I found a technical error in one of your articles — how do I
+                report it?
+                <svg
+                  class="faq-arrow"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <div class="faq-answer">
+                <p>
+                  We take technical accuracy seriously. Use the contact form
+                  with "Feedback or Bug Report" and include the article title
+                  and the specific issue. Verified corrections are applied
+                  within 24 hours and credited to the reporter.
+                </p>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question">
+                How do I request a specific topic or article?
+                <svg
+                  class="faq-arrow"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <div class="faq-answer">
+                <p>
+                  Select "Article Topic Request" in the contact form and
+                  describe the problem you're trying to solve. Reader-driven
+                  topics get prioritized in our editorial calendar — we publish
+                  what the community actually needs.
+                </p>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question">
+                Is the newsletter free?
+                <svg
+                  class="faq-arrow"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <div class="faq-answer">
+                <p>
+                  Yes, completely free — and always will be. We publish one
+                  deep-dive per week, sent directly to your inbox. No spam, no
+                  upsells. You can unsubscribe at any time with a single click.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      window.addEventListener("load", () => {
+        setTimeout(() => document.body.classList.add("loaded"), 300);
+      });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const toggleBtn = document.getElementById("theme-toggle");
+        const iconSun = document.getElementById("icon-sun");
+        const iconMoon = document.getElementById("icon-moon");
+        const htmlTag = document.documentElement;
+        const savedTheme = localStorage.getItem("zairo-theme") || "dark";
+        setTheme(savedTheme);
+
+        toggleBtn.addEventListener("click", () => {
+          setTheme(
+            htmlTag.getAttribute("data-theme") === "dark" ? "light" : "dark",
+          );
+        });
+
+        function setTheme(theme) {
+          htmlTag.setAttribute("data-theme", theme);
+          localStorage.setItem("zairo-theme", theme);
+          iconSun.style.display = theme === "light" ? "none" : "block";
+          iconMoon.style.display = theme === "light" ? "block" : "none";
+        }
+
+        document.getElementById("send-btn").addEventListener("click", () => {
+          const email = document.getElementById("email").value.trim();
+          const message = document.getElementById("message").value.trim();
+          const subject = document.getElementById("subject").value;
+          if (!email || !message || !subject) {
+            const btn = document.getElementById("send-btn");
+            btn.textContent = "Please fill required fields";
+            btn.style.background = "#ef4444";
+            setTimeout(() => {
+              btn.textContent = "Send Message";
+              btn.style.background = "";
+            }, 2000);
+            return;
+          }
+          const toast = document.getElementById("success-toast");
+          toast.classList.add("show");
+          setTimeout(() => toast.classList.remove("show"), 4000);
+          document.getElementById("first-name").value = "";
+          document.getElementById("last-name").value = "";
+          document.getElementById("email").value = "";
+          document.getElementById("subject").value = "";
+          document.getElementById("message").value = "";
+        });
+
+        document.querySelectorAll(".faq-question").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const item = btn.closest(".faq-item");
+            const isOpen = item.classList.contains("open");
+            document
+              .querySelectorAll(".faq-item")
+              .forEach((i) => i.classList.remove("open"));
+            if (!isOpen) item.classList.add("open");
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
